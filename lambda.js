@@ -1,7 +1,10 @@
-"use strict";
+/**
+ * JavaScript from Scratch
+ *
+ *   -- Ashok Menon (@amnn)
+ */
 
-// TODO: Intro comments
-// TODO: Presentation slides
+"use strict";
 
 /** Combinators */
 
