@@ -1,4 +1,5 @@
-// TODO: more comments.
+// TODO: Intro comments
+// TODO: Presentation slides
 
 /** Combinators */
 
@@ -215,7 +216,7 @@ function toArray(list_f) {
 }
 
 /*
-assert("List Encoding", [1, 2, 3], [1, 2, 3]);
+assert("List Encoding", [1, 2, 3], toArray(fromArray([1, 2, 3])));
 */
 
 const SPLAT = (list) => {
