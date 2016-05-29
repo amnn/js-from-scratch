@@ -1,3 +1,5 @@
+"use strict";
+
 // TODO: Intro comments
 // TODO: Presentation slides
 
@@ -7,46 +9,19 @@ const ID    = (x) => x;
 const CONST = (x) => (y) => x;
 const COMP  = (f, g) => (x) => f(g(x))
 
-/** Assertion function */
-
-function assert(msg, expected, actual) {
-    function eq(xs, ys) {
-        // Check for nulls
-        if (xs === null && ys === null) {
-            return true;
-        } else if (xs === null || ys == null) {
-            return false;
-        }
-
-        // Recurse into arrays
-        if (typeof xs === 'object' && typeof ys === 'object') {
-            const xsIsArray = xs.constructor === Array;
-            const ysIsArray = ys.constructor === Array;
-
-            if (xsIsArray && ysIsArray) {
-                return xs.every((x, i) => eq(x, ys[i]));
-            } else if (xsIsArray || ysIsArray) {
-                return false;
-            }
-        }
-
-        // Catch all case
-        return xs === ys;
-    }
-
-    if (eq(expected, actual)) {
-        console.log("\u2714", msg);
-    } else {
-        console.log("\u2717", msg);
-        console.log("  Expected:", expected);
-        console.log("  Actual:  ", actual);
-    }
-}
+/** Test Utilities */
+const { assert, stringify } = require("./assert.js");
 
 /*
-assert("Assert Numbers", 1, 1);
-assert("Assert Arrays", [2], [2]);
-assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
+{
+    assert("Assert Numbers", 1, 1);
+    assert("Assert Arrays", [2], [2]);
+    assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
+
+    const f = stringify("f");
+    const g = stringify("g");
+    assert("Stringify", "f(g(x))", COMP(f, g)("x"))
+}
 */
 
 /** Booleans */
