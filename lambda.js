@@ -218,8 +218,6 @@ function toArray(list_f) {
 assert("List Encoding", [1, 2, 3], [1, 2, 3]);
 */
 
-const HD    = (l) => l((hd, _) => JUST(hd), NOTHING)
-
 const SPLAT = (list) => {
     const WHEN_JUST = (splatPair) =>
           CONS(FST(splatPair), SND(splatPair));
@@ -230,6 +228,8 @@ const SPLAT = (list) => {
     return list(WHEN_NOT_EMPTY, NOTHING);
 }
 
+
+const HD = (l) => l((hd, _) => JUST(hd), NOTHING)
 const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
 
 /*
@@ -253,7 +253,7 @@ assert("Concat Arbitrary",
        toArray(CONCAT(fromArray([1,2,3]), fromArray([4, 5, 6]))));
 */
 
-const LEN  = (xs) => xs((_, tailLen) => S(tailLen), Z);
+const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
 /*
 assert("Length Empty     List", 0, toNum(LEN(NIL)));
