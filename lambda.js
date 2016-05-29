@@ -1,5 +1,13 @@
 // TODO: more comments.
 
+/** Combinators */
+
+const ID    = (x) => x;
+const CONST = (x) => (y) => x;
+const COMP  = (f, g) => (x) => f(g(x))
+
+/** Assertion function */
+
 function assert(msg, expected, actual) {
     function eq(xs, ys) {
         // Check for nulls
@@ -39,12 +47,6 @@ assert("Assert Numbers", 1, 1);
 assert("Assert Arrays", [2], [2]);
 assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
 */
-
-/** Combinators */
-
-const ID    = (x) => x;
-const CONST = (x) => (y) => x;
-const COMP  = (f, g) => (x) => f(g(x))
 
 /** Booleans */
 
