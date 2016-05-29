@@ -150,7 +150,7 @@ const SUB  = (m, n) => n(PRED, m);
 /*
 assert("Sub Right Identity", 4, toNum(SUB(fromNum(4), fromNum(0))));
 assert("Sub Arbitrary",      1, toNum(SUB(fromNum(3), fromNum(2))));
-assert("Sub Absorption",     0, toNum(SUB(fromNum(2), fromNum(3))));
+assert("Sub Saturation",     0, toNum(SUB(fromNum(2), fromNum(3))));
 */
 
 /** Pairs */
