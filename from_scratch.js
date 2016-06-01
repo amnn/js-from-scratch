@@ -202,8 +202,8 @@ const NOT = (b) => IF(b, () => F, () => T);
  *     ...
  *   5 to (s, z) => s(s(s(s(s(z)))))
  *
- * In other words, a number, `n`, is represented by taking a function `s` and a
- * parameter `z`, and applying `s` to `z`, `n` times.
+ * In other words, a number, `n`, is represented by taking a combinator `s` and
+ * a parameter `z`, and applying `s` to `z`, `n` times.
  *
  * We begin by defining combinators to construct numbers with. It suffices to
  * define `Z`, our encoding of 0, and `S`, the "successor" combinator, which,
@@ -339,7 +339,7 @@ const ADD  = (m, n) => (s, z) => m(s, n(s, z));
  * and we know how to perform `y` applications (using `n`)!
  */
 
-const MUL  = (m, n) => (s, z) => m((y) => n(s, y), z);
+const MUL  = (m, n) => (s, z) => m((a) => n(s, a), z);
 
 {
     const [n0, n1, n2, n3, n4] = [0, 1, 2, 3, 4].map(fromNum);
@@ -356,7 +356,19 @@ const MUL  = (m, n) => (s, z) => m((y) => n(s, y), z);
 
 
 
-/** Pairs */
+/** Pairs
+ *
+ * Pairs store two pieces of information, a first and a second piece. All we
+ * want from a pair is to be able to recover these pieces of information later.
+ *
+ * We represent them as higher-order functions: A pair holding `1` and `2` is
+ * `(p) => p(1, 2)`, we can recover the first or second part by passing in an
+ * appropriate combinator, `p`.
+ *
+ * Also note that we don't care what goes inside the pair, they could be
+ * combinators, or they could be regular JavaScript objects, arrays, numbers,
+ * etc.
+ */
 
 const PAIR = (fst, snd) => (p) => p(fst, snd);
 const FST  = (p) => p((fst, snd) => fst);
@@ -381,16 +393,30 @@ function toPair(pair_f) {
 
 
 
-/** Optional */
+/** Optionals
+ *
+ * A datatype is only as good as the actions you can perform on it. This is why,
+ * when we defined numbers, and pairs, we defined them as computations waiting
+ * for functions. Pairs are two values waiting for a function that accepts two
+ * parameters, numbers embody iteration.
+ *
+ * Mercifully, there is no `null` in our walled garden of combinators, but we do
+ * sometimes need optional values.
+ *
+ * Whenever we consume an optional value, we supply both a combinator to apply,
+ * and a default value. If the optional value is something, then the function
+ * will be applied to it and the result returned, if it is nothing, then the
+ * default value is returned.
+ */
 
-const JUST    = (x) => (j, n) => j(x)
-const NOTHING = (j, n) => n
+const SOME    = (v) => (s, n) => s(v)
+const NOTHING = (s, n) => n
 
 function fromOptional(opt) {
     if (opt === null) {
         return NOTHING;
     } else {
-        return JUST(opt);
+        return SOME(opt);
     }
 }
 
@@ -407,7 +433,20 @@ function toOptional(opt_f) {
 
 
 
-/** Lists */
+/** Lists
+ *
+ * We'll jump straight to what our encoding looks like for lists.
+ *
+ *   []              becomes (c, n) => n
+ *   [1]             becomes (c, n) => c(1, n)
+ *   [1, 2]          becomes (c, n) => c(1, c(2, n))
+ *                   ...
+ *   [1, 2, 3, 4, 5] becomes (c, n) => c(1, c(2, c(3, c(4, c(5, n)))))
+ *
+ * Like our encoding of numbers, we build lists from the empty list, `NIL`, and
+ * `CONS` which prefixes an element on to the front of an existing list. They
+ * correspond to `Z` and `S` for numbers, respectively.
+ */
 
 const CONS  = (hd, tl) => (c, n) => c(hd, tl(c, n));
 const NIL   = (c, n) => n;
@@ -435,17 +474,37 @@ function toArray(list_f) {
 
 
 
-/** Head and Tail */
+/** Head and Tail
+ *
+ * `HD` returns the first element of a list, and `TL` returns all but the first
+ * element. Both these combinators only produce meaningful results when applied
+ * to non-empty lists, but any list can be given to them. This is where our
+ * optionals come in handy.
+ *
+ * The definition of `HD` comes easily enough: The head of an empty list is
+ * `NOTHING`, the head of a non-empty list is, the first parameter passed to the
+ * combinator that acts on non-empty list (wrapped in the `SOME` combinator.) In
+ * a sense, this corresponds to `IS_ZERO` for numbers, and optionals correspond
+ * to booleans.
+ */
+
+const HD = (l) => l((hd, _) => SOME(hd), NOTHING)
+
+/**
+ * In order to calculate the tail of a list, we define another function:
+ * `SPLAT`. Splatting a non-empty list splits it apart at the top, into some
+ * pair of head and tail. Splatting an empty list gives nothing. It is
+ * straightforward to define `TL` using this.
+ */
 
 const SPLAT = (list) => {
     const WHEN_NOT_EMPTY = (hd, tailSplat) =>
-          JUST(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
+          SOME(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
 
     return list(WHEN_NOT_EMPTY, NOTHING);
 }
 
-const HD = (l) => l((hd, _) => JUST(hd), NOTHING)
-const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
+const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING)
 
 {
     assert("Empty Head",     null, toOptional(HD(NIL)));
@@ -460,7 +519,11 @@ const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
 
 
 
-/** List Concatenation */
+/** List Concatenation
+ *
+ * If viewed in the right light, list concatenation looks just like addition for
+ * numbers...
+ */
 
 const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
@@ -477,7 +540,19 @@ const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
 
 
-/** List Length */
+/** List Length
+ *
+ * Calculating the length of a list can also be seen as converting a list to a
+ * number. We do this by ignoring the elements of the list but keeping the
+ * structure of the function applications. Consider the encodings of [1,2,3,4]
+ * and the number 4:
+ *
+ * - (c, n) => c(1, c(2, c(3, c(4, n))))
+ * - (s, z) => s(   s(   s(   s(   z))))
+ *
+ * respectively. When aligned in this way, numbers look very much like lists
+ * with no space for elements.
+ */
 
 const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
@@ -490,7 +565,20 @@ const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
 
 
-/** Mapping */
+/** Mapping
+ *
+ * Mapping is usually defined recursively: Mapping over an empty list yields the
+ * empty list, and mapping over a non-empty list involves applying the function
+ * to the head, mapping over the tail, and then combining the two results with
+ * `CONS`.
+ *
+ * We have forbidden recursion, however, so "mapping over the tail" in this
+ * sense, is not feasible. However, the first parameter to the list is a
+ * combinator that is applied at every position in the list to the element at
+ * that position as well as the result of the application before it. This
+ * structure can be exploited to combine the elements of a list together, in
+ * this case, back into a list, but with transformed elements.
+ */
 
 const MAP = (f, xs) => xs((hd, mappedTl) => CONS(f(hd), mappedTl), NIL)
 
@@ -589,12 +677,12 @@ const FACT = (m) => {
 
 const ZIP = (xs, ys) => {
     const WHEN_NOT_EMPTY = (x, tailZipper) => (zs) => {
-        const WHEN_JUST = (splatPair) =>
+        const WHEN_SOME = (splatPair) =>
             splatPair((zhd, ztl) =>
                       CONS(PAIR(x, zhd),
                            tailZipper(ztl)));
 
-        return SPLAT(zs)(WHEN_JUST, NIL);
+        return SPLAT(zs)(WHEN_SOME, NIL);
     }
 
     return xs(WHEN_NOT_EMPTY, CONST(NIL))(ys);
