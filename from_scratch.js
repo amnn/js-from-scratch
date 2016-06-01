@@ -18,17 +18,12 @@
  *
  * A combinator is a higher-order function that uses only function application,
  * abstraction, its parameters, and previously defined combinators in computing
- * its result [1] (Note, this precludes explicit recursion!). We will show how,
- * by only using combinators, we can reclaim all the functionality we are used
- * to.
+ * its result [1] (Note, this precludes explicit recursion!).
  *
  * We make extensive use of JavaScript's arrow functions. Their parameters are
  * surrounded by `(...)`, and their body is prefixed by `=>`. If their body
  * consists of only a single returned expression, then we omit the curly braces
  * and the return [2].
- *
- * Below are some examples of combinators, written using JavaScript's arrow
- * functions.
  *
  * [1]: https://en.wikipedia.org/wiki/Combinatory_logic
  * [2]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions
@@ -47,9 +42,10 @@ const COMP  = (f, g) => (x) => f(g(x));
  * We need some functions to help us test out our combinators, we'll just import
  * them here.
  */
-const { assert, stringify } = require("./assert.js");
 
-/*
+const { assert, stringify } = require("./assert.js");
+const { log } = console;
+
 {
     // Assert checks equality between potentially nested data structures.
 
@@ -65,7 +61,6 @@ const { assert, stringify } = require("./assert.js");
     assert("Stringify f", "f(x)", f("x"));
     assert("Stringify compose", "f(g(x))", COMP(f, g)("x"))
 }
-*/
 
 
 
@@ -100,7 +95,6 @@ function toBool(bool_f) {
     return bool_f(true, false);
 }
 
-/*
 {
     // There are lots of ways to check that we have actually defined booleans
     // just by looking at the constraints we outlined earlier, and making sure
@@ -120,7 +114,6 @@ function toBool(bool_f) {
     assert("Encode True",  true,  toBool(fromBool(true)));
     assert("Encode False", false, toBool(fromBool(false)));
 }
-*/
 
 
 
@@ -148,7 +141,7 @@ const IF  = (c, t, e) => c(t, e)();
 /** Logical And */
 
 const AND = (l, r) => IF(l, () => r, () => F);
-/*
+
 {
     const [t, f] = [true, false].map(fromBool);
 
@@ -157,7 +150,6 @@ const AND = (l, r) => IF(l, () => r, () => F);
     assert("AND(T, F)", false, toBool(AND(t, f)));
     assert("AND(T, T)", true,  toBool(AND(t, t)));
 }
-*/
 
 
 
@@ -166,7 +158,7 @@ const AND = (l, r) => IF(l, () => r, () => F);
 /** Logical Or */
 
 const OR = (l, r) => IF(l, () => T, () => r);
-/*
+
 {
     const [t, f] = [true, false].map(fromBool);
 
@@ -175,7 +167,7 @@ const OR = (l, r) => IF(l, () => T, () => r);
     assert("OR(T, F)", true,  toBool(OR(t, f)));
     assert("OR(T, T)", true,  toBool(OR(t, t)));
 }
-*/
+
 
 
 
@@ -184,20 +176,40 @@ const OR = (l, r) => IF(l, () => T, () => r);
 /** Logical Not */
 
 const NOT = (b) => IF(b, () => F, () => T);
-/*
+
 {
     const [t, f] = [true, false].map(fromBool);
 
     assert("NOT(T)", false, toBool(NOT(t)));
     assert("NOT(F)", true,  toBool(NOT(f)));
 }
-*/
 
 
 
 
 
-/** Natural Numbers */
+
+/** Natural Numbers
+ *
+ * The "Natural" numbers are just the non-negative integers (0, 1, 2,
+ * 3,...). Like with booleans, we should choose a representation that we can
+ * both encode and decode into JavaScript's own numbers.
+ *
+ * Our chosen encoding maps:
+ *
+ *   0 to (s, z) => z
+ *   1 to (s, z) => s(z)
+ *     ...
+ *   5 to (s, z) => s(s(s(s(s(z)))))
+ *
+ * In other words, a number, `n`, is represented by taking a function `s` and a
+ * parameter `z`, and applying `s` to `z`, `n` times.
+ *
+ * We begin by defining combinators to construct numbers with. It suffices to
+ * define `Z`, our encoding of 0, and `S`, the "successor" combinator, which,
+ * when given the encoding of a number, returns the encoding of the number one
+ * greater.
+ */
 
 const Z = (s, z) => z;
 const S = (n) => (s, z) => s(n(s, z));
@@ -214,86 +226,131 @@ function toNum(num_f) {
     return num_f((n) => n + 1, 0);
 }
 
-/*
 {
     assert("Encode Zero",     0, toNum(fromNum(0)));
     assert("Encode Non-Zero", 5, toNum(fromNum(5)));
 }
-*/
 
 
 
 
 
-/** Is Zero? */
+/** Is Zero?
+ *
+ * Suppose we wish to check whether a number is 0 or not. One way to look at
+ * what we are doing is that we are consuming the number, to produce a boolean.
+ * To consume a combinator-encoded number, we have to apply it, but the question
+ * is, to what?
+ *
+ * Applying zero will always give you back the second parameter, so it is clear
+ * that we must give `T` as our second parameter to satisfy `IS_ZERO(Z) = T`.
+ *
+ * Applying a non-zero number will give back the result of applying the first
+ * parameter a number of times to `T`. No matter how many times we apply it, the
+ * return value should be `F`, so the first parameter is `(_) => F`.
+ */
 
 const IS_ZERO = (n) => n((_) => F, T);
 
-/*
 {
     assert("Test Zero",     true,  toBool(IS_ZERO(fromNum(0))));
     assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
 }
-*/
 
+/** Parity
+ *
+ * Checking whether a number is even (or odd, respectively) is another operation
+ * that consumes numbers and produces booleans, so again, we have to choose
+ * combinators to apply the number to.
+ *
+ * As before, by looking at zero we see that the second parameter has to be `T`
+ * in the definition of `IS_EVEN` (because 0 is even) and must be `F` in
+ * `IS_ODD`.
+ *
+ * The first parameter, `s`, is a bit more interesting. Let us look at some
+ * examples:
+ *
+ *   IS_EVEN(one) ---> one(s, T) --->   s(T)  -?-> F
+ *   IS_EVEN(two) ---> one(s, T) ---> s(s(T)) -?-> s(F) -?-> T
+ *
+ * So, `s(T)` should be `F` and `s(F)` should be `T`. `s` is `NOT`!
+ */
 
+const IS_EVEN = (n) => n(NOT, T);
+const IS_ODD  = (n) => n(NOT, F);
 
-
-
-/** Addition */
-
-const ADD  = (m, n) => (f, x) => m(f, n(f, x));
-
-/*
 {
+    for (let i = 0; i < 4; ++i) {
+        const ni = fromNum(i);
+        assert(`${i} even parity`, i % 2 === 0, toBool(IS_EVEN(ni)));
+        assert(`${i} odd parity`,  i % 2 === 1, toBool(IS_ODD(ni)));
+    }
+}
+
+
+/** Addition
+ *
+ * What does it mean to add two combinator numbers, `m` and `n`?  Let us say
+ * that `m` applies its first argument to its second `x` times and `n` applies
+ * its first argument to its second `y` times. The result should be a combinator
+ * number that accepts two arguments, `s` and `z`, and we need to apply `s` to
+ * `z` `x + y` times.
+ *
+ * Rewording the problem, this is the same as applying `s` `x` times to the
+ * result of applying `s` `y` times to `z`. Or, applying `s` `x` times to
+ * `n(s, z)`. Or `m(s, n(s, z))`.
+ */
+
+const ADD  = (m, n) => (s, z) => m(s, n(s, z));
+
+{
+    // Addition also has a bunch of rules that it needs to satisfy. We're going
+    // to avoid proving them ourselves again by using our encoding/decoding
+    // trick. We expect that JavaScript's own addition satisfies the rules, so
+    // all we need to show is that if we:
+    //
+    // - Encode two numbers: m, n
+    // - Perform our addition
+    // - Decode the result
+    //
+    // It should be equal to `m + n`. This should hold for any `m` and `n`, but
+    // we only check some key cases below.
+
     const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
 
-    assert("Add Left  Identity", 4, toNum(ADD(n0, n4)));
+    assert("Add Left Identity",  4, toNum(ADD(n0, n4)));
     assert("Add Right Identity", 4, toNum(ADD(n4, n0)));
     assert("Add Arbitrary",      5, toNum(ADD(n2, n3)));
     assert("Add Symmetric",      5, toNum(ADD(n3, n2)));
 }
-*/
 
 
 
 
 
-/** Multiplication */
+/** Multiplication
+ *
+ * We are given two combinator numbers, `m` and `n`. Let's say (once again) that
+ * `m` performs `x` applications, and `n` performs `y`. Then we need to produce
+ * a combinator that performs `x*y` applications.
+ *
+ * This is the same as performing `x` applications of a combinator that performs
+ * `y` applications, where we know how to perform `x` applications (using `m`),
+ * and we know how to perform `y` applications (using `n`)!
+ */
 
-const MUL  = (m, n) => (f, x) => m((y) => n(f, y), x);
+const MUL  = (m, n) => (s, z) => m((y) => n(s, y), z);
 
-/*
 {
     const [n0, n1, n2, n3, n4] = [0, 1, 2, 3, 4].map(fromNum);
 
-    assert("Mul Left  Zero",     0, toNum(MUL(n0, n2)));
+    assert("Mul Left Zero",      0, toNum(MUL(n0, n2)));
     assert("Mul Right Zero",     0, toNum(MUL(n2, n0)));
-    assert("Mul Left  Identity", 4, toNum(MUL(n1, n4)));
+    assert("Mul Left Identity",  4, toNum(MUL(n1, n4)));
     assert("Mul Right Identity", 4, toNum(MUL(n4, n1)));
     assert("Mul Arbitrary",      6, toNum(MUL(n2, n3)));
     assert("Mul Symmetric",      6, toNum(MUL(n3, n2)));
 }
-*/
-
-
-
-
-
-/** (Saturated) Subtraction */
-
-const PRED = (n) => (f, x) => n((y) => (g) => g(y(f)), CONST(x))(ID);
-const SUB  = (m, n) => n(PRED, m);
-
-/*
-{
-    const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
-
-    assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
-    assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
-    assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
-}
-*/
 
 
 
@@ -309,18 +366,16 @@ function fromPair(pair) {
     return PAIR(pair[0], pair[1]);
 }
 
-function toPair(pair) {
-    return [FST(pair), SND(pair)];
+function toPair(pair_f) {
+    return [FST(pair_f), SND(pair_f)];
 }
 
-/*
 {
     const pair = fromPair([1, 2]);
     assert("Pair Encoding", [1, 2], toPair(pair));
     assert("Pair First",  1, FST(pair));
     assert("Pair Second", 2, SND(pair));
 }
-*/
 
 
 
@@ -343,12 +398,10 @@ function toOptional(opt_f) {
     return opt_f(ID, null);
 }
 
-/*
 {
-    assert("Optional Null     Encoding", null, toOptional(fromOptional(null)));
+    assert("Optional Null Encoding",     null, toOptional(fromOptional(null)));
     assert("Optional Non-Null Encoding", 1,    toOptional(fromOptional(1)));
 }
-*/
 
 
 
@@ -374,11 +427,9 @@ function toArray(list_f) {
     }, []);
 }
 
-/*
 {
     assert("List Encoding", [1, 2, 3], toArray(fromArray([1, 2, 3])));
 }
-*/
 
 
 
@@ -387,11 +438,8 @@ function toArray(list_f) {
 /** Head and Tail */
 
 const SPLAT = (list) => {
-    const WHEN_JUST = (splatPair) =>
-          CONS(FST(splatPair), SND(splatPair));
-
     const WHEN_NOT_EMPTY = (hd, tailSplat) =>
-          JUST(PAIR(hd, tailSplat(WHEN_JUST, NIL)));
+          JUST(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
 
     return list(WHEN_NOT_EMPTY, NOTHING);
 }
@@ -399,7 +447,6 @@ const SPLAT = (list) => {
 const HD = (l) => l((hd, _) => JUST(hd), NOTHING)
 const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
 
-/*
 {
     assert("Empty Head",     null, toOptional(HD(NIL)));
     assert("Non-Empty Head", 1,    toOptional(HD(CONS(1, NIL))));
@@ -408,7 +455,6 @@ const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
     assert("Non-Empty Tail", [2, 3],
            toArray(toOptional(TL(fromArray([1, 2, 3])))));
 }
-*/
 
 
 
@@ -418,7 +464,6 @@ const TL = (l) => SPLAT(l)((pair) => JUST(SND(pair)), NOTHING)
 
 const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
-/*
 {
     const xs = fromArray([1, 2, 3]);
     const ys = fromArray([4, 5, 6]);
@@ -427,7 +472,6 @@ const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
     assert("Concat Right Identity", [1, 2, 3],     toArray(CONCAT(xs, NIL)));
     assert("Concat Arbitrary", [1, 2, 3, 4, 5, 6], toArray(CONCAT(xs, ys)));
 }
-*/
 
 
 
@@ -437,12 +481,10 @@ const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
 const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
-/*
 {
-    assert("Length Empty     List", 0, toNum(LEN(NIL)));
+    assert("Length Empty List",     0, toNum(LEN(NIL)));
     assert("Length Non-Empty List", 3, toNum(LEN(fromArray([1,2,3]))));
 }
-*/
 
 
 
@@ -452,12 +494,10 @@ const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
 const MAP = (f, xs) => xs((hd, mappedTl) => CONS(f(hd), mappedTl), NIL)
 
-/*
 {
     const list = fromArray([1, 2, 3].map(fromNum));
     assert("Map", [2, 3, 4], toArray(MAP(S, list)).map(toNum));
 }
-*/
 
 
 
@@ -471,7 +511,6 @@ const FILTER = (p, xs) => xs((hd, filteredTl) =>
                                 () => filteredTl),
                              NIL);
 
-/*
 {
     const list = fromArray([1, 0, 2, 0, 3, 0].map(fromNum));
 
@@ -481,20 +520,18 @@ const FILTER = (p, xs) => xs((hd, filteredTl) =>
     assert("Filter Complement", [1, 2, 3],
            toArray(FILTER(COMP(NOT, IS_ZERO), list)).map(toNum));
 }
-*/
 
 
 
 
 
-/** Folding */
+/** BONUS: Folding */
 
 const FOLDR = (f, e, xs) => xs(f, e);
 
 const FOLDL = (f, e, xs) => xs((hd, foldedTail) =>
                                (acc) => foldedTail(f(acc, hd)), ID)(e)
 
-/*
 {
     const list = fromArray(["x1", "x2", "x3"]);
 
@@ -506,7 +543,23 @@ const FOLDL = (f, e, xs) => xs((hd, foldedTail) =>
            "f(f(f(e, x1), x2), x3)",
            FOLDL(stringify("f"), "e", list));
 }
-*/
+
+
+
+
+
+/** BONUS: (Saturated) Subtraction */
+
+const PRED = (n) => (f, x) => n((y) => (g) => g(y(f)), CONST(x))(ID);
+const SUB  = (m, n) => n(PRED, m);
+
+{
+    const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
+
+    assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
+    assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
+    assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
+}
 
 
 
@@ -522,13 +575,11 @@ const FACT = (m) => {
                  PAIR(Z, S(Z))));
 }
 
-/*
 {
     assert("0!", 1,   toNum(FACT(fromNum(0))));
     assert("1!", 1,   toNum(FACT(fromNum(1))));
     assert("5!", 120, toNum(FACT(fromNum(5))));
 }
-*/
 
 
 
@@ -549,7 +600,6 @@ const ZIP = (xs, ys) => {
     return xs(WHEN_NOT_EMPTY, CONST(NIL))(ys);
 }
 
-/*
 {
     const long  = fromArray([1, 2, 3]);
     const short = fromArray([1, 2]);
@@ -563,4 +613,3 @@ const ZIP = (xs, ys) => {
     assert("Zip Short Right", [[1,1], [2,2]],
            toArray(ZIP(long, short)).map(toPair));
 }
-*/
