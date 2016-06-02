@@ -47,19 +47,19 @@ const { assert, stringify } = require("./assert.js");
 const { log } = console;
 
 {
-    // Assert checks equality between potentially nested data structures.
+  // Assert checks equality between potentially nested data structures.
 
-    assert("Assert Numbers", 1, 1);
-    assert("Assert Arrays", [2], [2]);
-    assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
+  assert("Assert Numbers", 1, 1);
+  assert("Assert Arrays", [2], [2]);
+  assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
 
-    // Stringify is a bit more unusual, it is easiest to see what it does by
-    // looking at the examples below.
+  // Stringify is a bit more unusual, it is easiest to see what it does by
+  // looking at the examples below.
 
-    const f = stringify("f");
-    const g = stringify("g");
-    assert("Stringify f", "f(x)", f("x"));
-    assert("Stringify compose", "f(g(x))", COMP(f, g)("x"))
+  const f = stringify("f");
+  const g = stringify("g");
+  assert("Stringify f", "f(x)", f("x"));
+  assert("Stringify compose", "f(g(x))", COMP(f, g)("x"));
 }
 
 
@@ -84,35 +84,35 @@ const T = (t, f) => t;
 const F = (t, f) => f;
 
 function fromBool(bool) {
-    if (bool) {
-        return T;
-    } else {
-        return F;
-    }
+  if (bool) {
+    return T;
+  } else {
+    return F;
+  }
 }
 
 function toBool(bool_f) {
-    return bool_f(true, false);
+  return bool_f(true, false);
 }
 
 {
-    // There are lots of ways to check that we have actually defined booleans
-    // just by looking at the constraints we outlined earlier, and making sure
-    // we have met them.
-    //
-    // We are going to take a shortcut, however, by defining a way to convert
-    // between our combinators and the concepts they simulate. If converting a
-    // regular boolean into a combinator and back preserves it (true comes back
-    // out as true, and false back out as false), and conversely, converting a
-    // combinator boolean into a regular boolean and back preserves it, we know
-    // we're on to a good thing.
-    //
-    // We check one direction below, but the other direction is harder to test
-    // reliably, because it involves checking equality between functions, so
-    // you'll have to take my word for it!
+  // There are lots of ways to check that we have actually defined booleans
+  // just by looking at the constraints we outlined earlier, and making sure
+  // we have met them.
+  //
+  // We are going to take a shortcut, however, by defining a way to convert
+  // between our combinators and the concepts they simulate. If converting a
+  // regular boolean into a combinator and back preserves it (true comes back
+  // out as true, and false back out as false), and conversely, converting a
+  // combinator boolean into a regular boolean and back preserves it, we know
+  // we're on to a good thing.
+  //
+  // We check one direction below, but the other direction is harder to test
+  // reliably, because it involves checking equality between functions, so
+  // you'll have to take my word for it!
 
-    assert("Encode True",  true,  toBool(fromBool(true)));
-    assert("Encode False", false, toBool(fromBool(false)));
+  assert("Encode True",  true,  toBool(fromBool(true)));
+  assert("Encode False", false, toBool(fromBool(false)));
 }
 
 
@@ -143,12 +143,12 @@ const IF  = (c, t, e) => c(t, e)();
 const AND = (l, r) => IF(l, () => r, () => F);
 
 {
-    const [t, f] = [true, false].map(fromBool);
+  const [t, f] = [true, false].map(fromBool);
 
-    assert("AND(F, F)", false, toBool(AND(f, f)));
-    assert("AND(F, T)", false, toBool(AND(f, t)));
-    assert("AND(T, F)", false, toBool(AND(t, f)));
-    assert("AND(T, T)", true,  toBool(AND(t, t)));
+  assert("AND(F, F)", false, toBool(AND(f, f)));
+  assert("AND(F, T)", false, toBool(AND(f, t)));
+  assert("AND(T, F)", false, toBool(AND(t, f)));
+  assert("AND(T, T)", true,  toBool(AND(t, t)));
 }
 
 
@@ -160,12 +160,12 @@ const AND = (l, r) => IF(l, () => r, () => F);
 const OR = (l, r) => IF(l, () => T, () => r);
 
 {
-    const [t, f] = [true, false].map(fromBool);
+  const [t, f] = [true, false].map(fromBool);
 
-    assert("OR(F, F)", false, toBool(OR(f, f)));
-    assert("OR(F, T)", true,  toBool(OR(f, t)));
-    assert("OR(T, F)", true,  toBool(OR(t, f)));
-    assert("OR(T, T)", true,  toBool(OR(t, t)));
+  assert("OR(F, F)", false, toBool(OR(f, f)));
+  assert("OR(F, T)", true,  toBool(OR(f, t)));
+  assert("OR(T, F)", true,  toBool(OR(t, f)));
+  assert("OR(T, T)", true,  toBool(OR(t, t)));
 }
 
 
@@ -178,10 +178,10 @@ const OR = (l, r) => IF(l, () => T, () => r);
 const NOT = (b) => IF(b, () => F, () => T);
 
 {
-    const [t, f] = [true, false].map(fromBool);
+  const [t, f] = [true, false].map(fromBool);
 
-    assert("NOT(T)", false, toBool(NOT(t)));
-    assert("NOT(F)", true,  toBool(NOT(f)));
+  assert("NOT(T)", false, toBool(NOT(t)));
+  assert("NOT(F)", true,  toBool(NOT(f)));
 }
 
 
@@ -215,20 +215,20 @@ const Z = (s, z) => z;
 const S = (n) => (s, z) => s(n(s, z));
 
 function fromNum(num) {
-    if (num === 0) {
-        return Z;
-    } else {
-        return S(fromNum(num - 1));
-    }
+  if (num === 0) {
+    return Z;
+  } else {
+    return S(fromNum(num - 1));
+  }
 }
 
 function toNum(num_f) {
-    return num_f((n) => n + 1, 0);
+  return num_f((n) => n + 1, 0);
 }
 
 {
-    assert("Encode Zero",     0, toNum(fromNum(0)));
-    assert("Encode Non-Zero", 5, toNum(fromNum(5)));
+  assert("Encode Zero",     0, toNum(fromNum(0)));
+  assert("Encode Non-Zero", 5, toNum(fromNum(5)));
 }
 
 
@@ -253,8 +253,8 @@ function toNum(num_f) {
 const IS_ZERO = (n) => n((_) => F, T);
 
 {
-    assert("Test Zero",     true,  toBool(IS_ZERO(fromNum(0))));
-    assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
+  assert("Test Zero",     true,  toBool(IS_ZERO(fromNum(0))));
+  assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
 }
 
 /** Parity
@@ -280,11 +280,11 @@ const IS_EVEN = (n) => n(NOT, T);
 const IS_ODD  = (n) => n(NOT, F);
 
 {
-    for (let i = 0; i < 4; ++i) {
-        const ni = fromNum(i);
-        assert(`${i} even parity`, i % 2 === 0, toBool(IS_EVEN(ni)));
-        assert(`${i} odd parity`,  i % 2 === 1, toBool(IS_ODD(ni)));
-    }
+  for (let i = 0; i < 4; ++i) {
+    const ni = fromNum(i);
+    assert(`${i} even parity`, i % 2 === 0, toBool(IS_EVEN(ni)));
+    assert(`${i} odd parity`,  i % 2 === 1, toBool(IS_ODD(ni)));
+  }
 }
 
 
@@ -304,24 +304,24 @@ const IS_ODD  = (n) => n(NOT, F);
 const ADD  = (m, n) => (s, z) => m(s, n(s, z));
 
 {
-    // Addition also has a bunch of rules that it needs to satisfy. We're going
-    // to avoid proving them ourselves again by using our encoding/decoding
-    // trick. We expect that JavaScript's own addition satisfies the rules, so
-    // all we need to show is that if we:
-    //
-    // - Encode two numbers: m, n
-    // - Perform our addition
-    // - Decode the result
-    //
-    // It should be equal to `m + n`. This should hold for any `m` and `n`, but
-    // we only check some key cases below.
+  // Addition also has a bunch of rules that it needs to satisfy. We're going
+  // to avoid proving them ourselves again by using our encoding/decoding
+  // trick. We expect that JavaScript's own addition satisfies the rules, so
+  // all we need to show is that if we:
+  //
+  // - Encode two numbers: m, n
+  // - Perform our addition
+  // - Decode the result
+  //
+  // It should be equal to `m + n`. This should hold for any `m` and `n`, but
+  // we only check some key cases below.
 
-    const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
+  const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
 
-    assert("Add Left Identity",  4, toNum(ADD(n0, n4)));
-    assert("Add Right Identity", 4, toNum(ADD(n4, n0)));
-    assert("Add Arbitrary",      5, toNum(ADD(n2, n3)));
-    assert("Add Symmetric",      5, toNum(ADD(n3, n2)));
+  assert("Add Left Identity",  4, toNum(ADD(n0, n4)));
+  assert("Add Right Identity", 4, toNum(ADD(n4, n0)));
+  assert("Add Arbitrary",      5, toNum(ADD(n2, n3)));
+  assert("Add Symmetric",      5, toNum(ADD(n3, n2)));
 }
 
 
@@ -339,17 +339,17 @@ const ADD  = (m, n) => (s, z) => m(s, n(s, z));
  * and we know how to perform `y` applications (using `n`)!
  */
 
-const MUL  = (m, n) => (s, z) => m((a) => n(s, a), z);
+const MUL = (m, n) => (s, z) => m((a) => n(s, a), z);
 
 {
-    const [n0, n1, n2, n3, n4] = [0, 1, 2, 3, 4].map(fromNum);
+  const [n0, n1, n2, n3, n4] = [0, 1, 2, 3, 4].map(fromNum);
 
-    assert("Mul Left Zero",      0, toNum(MUL(n0, n2)));
-    assert("Mul Right Zero",     0, toNum(MUL(n2, n0)));
-    assert("Mul Left Identity",  4, toNum(MUL(n1, n4)));
-    assert("Mul Right Identity", 4, toNum(MUL(n4, n1)));
-    assert("Mul Arbitrary",      6, toNum(MUL(n2, n3)));
-    assert("Mul Symmetric",      6, toNum(MUL(n3, n2)));
+  assert("Mul Left Zero",      0, toNum(MUL(n0, n2)));
+  assert("Mul Right Zero",     0, toNum(MUL(n2, n0)));
+  assert("Mul Left Identity",  4, toNum(MUL(n1, n4)));
+  assert("Mul Right Identity", 4, toNum(MUL(n4, n1)));
+  assert("Mul Arbitrary",      6, toNum(MUL(n2, n3)));
+  assert("Mul Symmetric",      6, toNum(MUL(n3, n2)));
 }
 
 
@@ -375,18 +375,18 @@ const FST  = (p) => p((fst, snd) => fst);
 const SND  = (p) => p((fst, snd) => snd);
 
 function fromPair(pair) {
-    return PAIR(pair[0], pair[1]);
+  return PAIR(pair[0], pair[1]);
 }
 
 function toPair(pair_f) {
-    return [FST(pair_f), SND(pair_f)];
+  return [FST(pair_f), SND(pair_f)];
 }
 
 {
-    const pair = fromPair([1, 2]);
-    assert("Pair Encoding", [1, 2], toPair(pair));
-    assert("Pair First",  1, FST(pair));
-    assert("Pair Second", 2, SND(pair));
+  const pair = fromPair([1, 2]);
+  assert("Pair Encoding", [1, 2], toPair(pair));
+  assert("Pair First",  1, FST(pair));
+  assert("Pair Second", 2, SND(pair));
 }
 
 
@@ -409,24 +409,24 @@ function toPair(pair_f) {
  * default value is returned.
  */
 
-const SOME    = (v) => (s, n) => s(v)
-const NOTHING = (s, n) => n
+const SOME    = (v) => (s, n) => s(v);
+const NOTHING = (s, n) => n;
 
 function fromOptional(opt) {
-    if (opt === null) {
-        return NOTHING;
-    } else {
-        return SOME(opt);
-    }
+  if (opt === null) {
+    return NOTHING;
+  } else {
+    return SOME(opt);
+  }
 }
 
 function toOptional(opt_f) {
-    return opt_f(ID, null);
+  return opt_f(ID, null);
 }
 
 {
-    assert("Optional Null Encoding",     null, toOptional(fromOptional(null)));
-    assert("Optional Non-Null Encoding", 1,    toOptional(fromOptional(1)));
+  assert("Optional Null Encoding",     null, toOptional(fromOptional(null)));
+  assert("Optional Non-Null Encoding", 1,    toOptional(fromOptional(1)));
 }
 
 
@@ -448,26 +448,26 @@ function toOptional(opt_f) {
  * correspond to `Z` and `S` for numbers, respectively.
  */
 
-const CONS  = (hd, tl) => (c, n) => c(hd, tl(c, n));
-const NIL   = (c, n) => n;
+const CONS = (hd, tl) => (c, n) => c(hd, tl(c, n));
+const NIL  = (c, n) => n;
 
 function fromArray(array) {
-    if (array.length === 0) {
-        return NIL;
-    } else {
-        return CONS(array[0], fromArray(array.slice(1)));
-    }
+  if (array.length === 0) {
+    return NIL;
+  } else {
+    return CONS(array[0], fromArray(array.slice(1)));
+  }
 }
 
 function toArray(list_f) {
-    return list_f((hd, tl) => {
-        tl.unshift(hd);
-        return tl;
-    }, []);
+  return list_f((hd, tl) => {
+    tl.unshift(hd);
+    return tl;
+  }, []);
 }
 
 {
-    assert("List Encoding", [1, 2, 3], toArray(fromArray([1, 2, 3])));
+  assert("List Encoding", [1, 2, 3], toArray(fromArray([1, 2, 3])));
 }
 
 
@@ -488,7 +488,7 @@ function toArray(list_f) {
  * to booleans.
  */
 
-const HD = (l) => l((hd, _) => SOME(hd), NOTHING)
+const HD = (l) => l((hd, _) => SOME(hd), NOTHING);
 
 /**
  * In order to calculate the tail of a list, we define another function:
@@ -498,21 +498,21 @@ const HD = (l) => l((hd, _) => SOME(hd), NOTHING)
  */
 
 const SPLAT = (list) => {
-    const WHEN_NOT_EMPTY = (hd, tailSplat) =>
+  const WHEN_NOT_EMPTY = (hd, tailSplat) =>
           SOME(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
 
-    return list(WHEN_NOT_EMPTY, NOTHING);
-}
+  return list(WHEN_NOT_EMPTY, NOTHING);
+};
 
-const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING)
+const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING);
 
 {
-    assert("Empty Head",     null, toOptional(HD(NIL)));
-    assert("Non-Empty Head", 1,    toOptional(HD(CONS(1, NIL))));
-    assert("Empty Tail",     null, toOptional(TL(NIL)));
+  assert("Empty Head",     null, toOptional(HD(NIL)));
+  assert("Non-Empty Head", 1,    toOptional(HD(CONS(1, NIL))));
+  assert("Empty Tail",     null, toOptional(TL(NIL)));
 
-    assert("Non-Empty Tail", [2, 3],
-           toArray(toOptional(TL(fromArray([1, 2, 3])))));
+  assert("Non-Empty Tail", [2, 3],
+         toArray(toOptional(TL(fromArray([1, 2, 3])))));
 }
 
 
@@ -528,12 +528,12 @@ const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING)
 const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
 {
-    const xs = fromArray([1, 2, 3]);
-    const ys = fromArray([4, 5, 6]);
+  const xs = fromArray([1, 2, 3]);
+  const ys = fromArray([4, 5, 6]);
 
-    assert("Concat Left Identity",  [4, 5, 6],     toArray(CONCAT(NIL, ys)));
-    assert("Concat Right Identity", [1, 2, 3],     toArray(CONCAT(xs, NIL)));
-    assert("Concat Arbitrary", [1, 2, 3, 4, 5, 6], toArray(CONCAT(xs, ys)));
+  assert("Concat Left Identity",  [4, 5, 6],     toArray(CONCAT(NIL, ys)));
+  assert("Concat Right Identity", [1, 2, 3],     toArray(CONCAT(xs, NIL)));
+  assert("Concat Arbitrary", [1, 2, 3, 4, 5, 6], toArray(CONCAT(xs, ys)));
 }
 
 
@@ -557,41 +557,34 @@ const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
 {
-    assert("Length Empty List",     0, toNum(LEN(NIL)));
-    assert("Length Non-Empty List", 3, toNum(LEN(fromArray([1,2,3]))));
+  assert("Length Empty List",     0, toNum(LEN(NIL)));
+  assert("Length Non-Empty List", 3, toNum(LEN(fromArray([1,2,3]))));
 }
 
 
 
 
 
-/** Mapping
+/** Mapping and Filtering
  *
- * Mapping is usually defined recursively: Mapping over an empty list yields the
- * empty list, and mapping over a non-empty list involves applying the function
- * to the head, mapping over the tail, and then combining the two results with
- * `CONS`.
+ * Map and filter are usually defined recursively: Mapping over an empty list
+ * yields the empty list, and mapping over a non-empty list involves applying
+ * the function to the head, mapping over the tail, and then combining the two
+ * results with `CONS`.
  *
- * We have forbidden recursion, however, so "mapping over the tail" in this
- * sense, is not feasible. However, the first parameter to the list is a
- * combinator that is applied at every position in the list to the element at
- * that position as well as the result of the application before it. This
- * structure can be exploited to combine the elements of a list together, in
- * this case, back into a list, but with transformed elements.
+ * We have forbidden conventional recursion, because we can't refer to a
+ * combinator by name in its own definition. But there is a way around it. Take
+ * for, example, the encoding for [1, 2, 3, 4]:
+ *
+ *   (c, n) => c(1, c(2, c(3, c(4, n))))
+ *
+ * The parameter `c` is applied at every position in the list to the element at
+ * that position, and the result of applying `c` to all following positions. It
+ * looks an awful lot like `c` is being called recursively, and it comes for
+ * free from the structure of the data.
  */
 
-const MAP = (f, xs) => xs((hd, mappedTl) => CONS(f(hd), mappedTl), NIL)
-
-{
-    const list = fromArray([1, 2, 3].map(fromNum));
-    assert("Map", [2, 3, 4], toArray(MAP(S, list)).map(toNum));
-}
-
-
-
-
-
-/** Filtering */
+const MAP = (f, xs) => xs((hd, mappedTl) => CONS(f(hd), mappedTl), NIL);
 
 const FILTER = (p, xs) => xs((hd, filteredTl) =>
                              IF(p(hd),
@@ -600,36 +593,74 @@ const FILTER = (p, xs) => xs((hd, filteredTl) =>
                              NIL);
 
 {
-    const list = fromArray([1, 0, 2, 0, 3, 0].map(fromNum));
+  const list = fromArray([1, 0, 2, 0, 3, 0].map(fromNum));
 
-    assert("Filter", [0, 0, 0],
-           toArray(FILTER(IS_ZERO, list)).map(toNum));
+  assert("Map", [2, 1, 3, 1, 4, 1],
+         toArray(MAP(S, list)).map(toNum));
 
-    assert("Filter Complement", [1, 2, 3],
-           toArray(FILTER(COMP(NOT, IS_ZERO), list)).map(toNum));
+  assert("Filter", [0, 0, 0],
+         toArray(FILTER(IS_ZERO, list)).map(toNum));
+
+  assert("Filter Complement", [1, 2, 3],
+         toArray(FILTER(COMP(NOT, IS_ZERO), list)).map(toNum));
 }
 
 
 
 
 
-/** BONUS: Folding */
+/** BONUS: Folding
+ *
+ * Folding over (or reducing) a data structure involves replacing the
+ * constructors used to build it with functions. For example:
+ *
+ * - 3 is built by `S(S(S(Z)))`, and so folded by `(s, z) => s(s(s(z)))`
+ *
+ * - [1, 2, 3] is built by `CONS(1, CONS(2, CONS(3, NIL)))`, and so folded by
+ *   `(c, n) => c(1, c(2, c(3, n)))`
+ *
+ * Folds are precisely the encoding we chose for the data structures!
+ *
+ * Some data structures can be folded in multiple ways. For example, a list can
+ * be folded from right to left, or from left to right. We chose to define our
+ * data structure as the right to left fold, but that makes the left to right
+ * fold more difficult to implement.
+ *
+ * The trick we will pull, is to define the left fold using a right fold! In
+ * particular, given a list `[x1, x2, x3]`, we will use a right-fold to produce
+ * the combinator `(n) => f(f(f(n, x1), x2), x3)`, which we may apply to `e` to
+ * get the value of the left fold. This implementation relies on us being able
+ * to answer the following three questions.
+ *
+ *  1. What is the appropriate combinator for the empty list?
+ *
+ *     After producing the combinator, we apply it to `e` to produce the result
+ *     of the left fold. The result of left folding the empty list should be `e`
+ *     itself, so it follows that the combinator for the empty list is `ID`.
+ *
+ *  2. Given the combinator for the tail, and the head, how do we produce the
+ *     combinator for the list?
+ *
+ *     Suppose we have a combinator `folder = (n) => f(f(n, x2), x3)`, the
+ *     element `x1`, and the function `f`, then we can produce the combinator
+ *     `(n) => f(f(f(n, x1), x2, x3))` as `(n) => folder(f(n, x1))`.
+ */
 
 const FOLDR = (f, e, xs) => xs(f, e);
 
-const FOLDL = (f, e, xs) => xs((hd, foldedTail) =>
-                               (acc) => foldedTail(f(acc, hd)), ID)(e)
+const FOLDL = (f, e, xs) => xs((hd, folder) =>
+                               (n) => folder(f(n, hd)), ID)(e)
 
 {
-    const list = fromArray(["x1", "x2", "x3"]);
+  const list = fromArray(["x1", "x2", "x3"]);
 
-    assert("Right fold",
-           "f(x1, f(x2, f(x3, e)))",
-           FOLDR(stringify("f"), "e", list));
+  assert("Right fold",
+         "f(x1, f(x2, f(x3, e)))",
+         FOLDR(stringify("f"), "e", list));
 
-    assert("Left fold",
-           "f(f(f(e, x1), x2), x3)",
-           FOLDL(stringify("f"), "e", list));
+  assert("Left fold",
+         "f(f(f(e, x1), x2), x3)",
+         FOLDL(stringify("f"), "e", list));
 }
 
 
@@ -642,11 +673,11 @@ const PRED = (n) => (f, x) => n((y) => (g) => g(y(f)), CONST(x))(ID);
 const SUB  = (m, n) => n(PRED, m);
 
 {
-    const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
+  const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
 
-    assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
-    assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
-    assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
+  assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
+  assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
+  assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
 }
 
 
@@ -656,17 +687,17 @@ const SUB  = (m, n) => n(PRED, m);
 /** BONUS: Factorial */
 
 const FACT = (m) => {
-    const UPDATE_PAIR = (num, fact) =>
-        PAIR(S(num), MUL(S(num), fact));
+  const UPDATE_PAIR = (num, fact) =>
+          PAIR(S(num), MUL(S(num), fact));
 
-    return SND(m((prevPair) => prevPair(UPDATE_PAIR),
-                 PAIR(Z, S(Z))));
-}
+  return SND(m((prevPair) => prevPair(UPDATE_PAIR),
+               PAIR(Z, S(Z))));
+};
 
 {
-    assert("0!", 1,   toNum(FACT(fromNum(0))));
-    assert("1!", 1,   toNum(FACT(fromNum(1))));
-    assert("5!", 120, toNum(FACT(fromNum(5))));
+  assert("0!", 1,   toNum(FACT(fromNum(0))));
+  assert("1!", 1,   toNum(FACT(fromNum(1))));
+  assert("5!", 120, toNum(FACT(fromNum(5))));
 }
 
 
@@ -676,28 +707,28 @@ const FACT = (m) => {
 /** BONUS: Zipping Lists */
 
 const ZIP = (xs, ys) => {
-    const WHEN_NOT_EMPTY = (x, tailZipper) => (zs) => {
-        const WHEN_SOME = (splatPair) =>
+  const WHEN_NOT_EMPTY = (x, tailZipper) => (zs) => {
+    const WHEN_SOME = (splatPair) =>
             splatPair((zhd, ztl) =>
                       CONS(PAIR(x, zhd),
                            tailZipper(ztl)));
 
-        return SPLAT(zs)(WHEN_SOME, NIL);
-    }
+    return SPLAT(zs)(WHEN_SOME, NIL);
+  };
 
-    return xs(WHEN_NOT_EMPTY, CONST(NIL))(ys);
-}
+  return xs(WHEN_NOT_EMPTY, CONST(NIL))(ys);
+};
 
 {
-    const long  = fromArray([1, 2, 3]);
-    const short = fromArray([1, 2]);
+  const long  = fromArray([1, 2, 3]);
+  const short = fromArray([1, 2]);
 
-    assert("Zip", [[1,1], [2,2], [3,3]],
-           toArray(ZIP(long, long)).map(toPair));
+  assert("Zip", [[1,1], [2,2], [3,3]],
+         toArray(ZIP(long, long)).map(toPair));
 
-    assert("Zip Short Left",  [[1,1], [2,2]],
-           toArray(ZIP(short, long)).map(toPair));
+  assert("Zip Short Left",  [[1,1], [2,2]],
+         toArray(ZIP(short, long)).map(toPair));
 
-    assert("Zip Short Right", [[1,1], [2,2]],
-           toArray(ZIP(long, short)).map(toPair));
+  assert("Zip Short Right", [[1,1], [2,2]],
+         toArray(ZIP(long, short)).map(toPair));
 }
