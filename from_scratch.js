@@ -667,9 +667,51 @@ const FOLDL = (f, e, xs) => xs((hd, folder) =>
 
 
 
-/** BONUS: (Saturated) Subtraction */
+/** BONUS: (Saturated) Subtraction
+ *
+ * We have no encoding for negative numbers. This poses a problem when defining
+ * subtraction, because subtracting the larger of two numbers from the smaller
+ * usually yields a negative number. If the result of subtraction were to drop
+ * below 0, saturated subtraction gives 0 instead.
+ *
+ * This is definable as a combinator: in order to subtract `n` (performing `y`
+ * applications) from `m`, we subtract 1 from `m`, `y` times. This relies upon
+ * the auxiliary combinator, `PRED`, with the following specification:
+ *
+ *   PRED(S(n)) = n if `n` is a number
+ *   PRED(Z)    = Z
+ *
+ * `PRED` accepts a number and produces a number, so we know it is of the form:
+ *
+ *   const PRED = (n) => (s, z) => ...
+ *
+ * Within the `...`, we must apply `s` to `z` one fewer time than `n` does. We
+ * do this by consuming `n` to produce a function that abstracts over the last
+ * application of `s`. That is to say:
+ *
+ * (s, z) =>       s(z)    becomes (g) =>       g(z)
+ * (s, z) =>     s(s(z))   becomes (g) =>     g(s(z))
+ *                         ...
+ * (s, z) => s(s(s(s(z)))) becomes (g) => g(s(s(s(z))))
+ *
+ * When the number is 0, there are no applications of `s`, so the resulting
+ * combinator is `(g) => z`. For the recursive case, we are provided with a
+ * combinator that performs x-1 applications and abstracts over the x'th (`f`),
+ * and we must return a combinator that performs `x` applications and abstracts
+ * over the x+1'th.
+ *
+ *   f(s)
+ *
+ * gives us the `x` applications, and we abstract over the last application by
+ * wrapping it in a combinator:
+ *
+ *   (g) => g(f(s))
+ *
+ * Finally, we apply the result of consuming the number to `ID` to discard the
+ * very last application of `s` that was abstracted over.
+ */
 
-const PRED = (n) => (f, x) => n((y) => (g) => g(y(f)), CONST(x))(ID);
+const PRED = (n) => (s, z) => n((f) => (g) => g(f(s)), (_) => z)(ID);
 const SUB  = (m, n) => n(PRED, m);
 
 {
