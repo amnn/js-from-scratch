@@ -132,7 +132,7 @@ function toBool(bool_f) {
  * appropriate case is picked, it is called to evaluate it.
  */
 
-const IF  = (c, t, e) => c(t, e)();
+const IF = (c, t, e) => c(t, e)();
 
 
 
@@ -271,7 +271,7 @@ const IS_ZERO = (n) => n((_) => F, T);
  * examples:
  *
  *   IS_EVEN(one) ---> one(s, T) --->   s(T)  -?-> F
- *   IS_EVEN(two) ---> one(s, T) ---> s(s(T)) -?-> s(F) -?-> T
+ *   IS_EVEN(two) ---> two(s, T) ---> s(s(T)) -?-> s(F) -?-> T
  *
  * So, `s(T)` should be `F` and `s(F)` should be `T`. `s` is `NOT`!
  */
@@ -296,12 +296,14 @@ const IS_ODD  = (n) => n(NOT, F);
  * number that accepts two arguments, `s` and `z`, and we need to apply `s` to
  * `z` `x + y` times.
  *
- * Rewording the problem, this is the same as applying `s` `x` times to the
- * result of applying `s` `y` times to `z`. Or, applying `s` `x` times to
- * `n(s, z)`. Or `m(s, n(s, z))`.
+ * Rewording the problem, this is the same as:
+ *
+ *  - Applying `s` `x` times to the result of applying `s` `y` times to `z`.
+ *  - Or, applying `s` `x` times to `n(s, z)`.
+ *  - Or, `m(s, n(s, z))`.
  */
 
-const ADD  = (m, n) => (s, z) => m(s, n(s, z));
+const ADD = (m, n) => (s, z) => m(s, n(s, z));
 
 {
   // Addition also has a bunch of rules that it needs to satisfy. We're going
@@ -726,14 +728,41 @@ const SUB  = (m, n) => n(PRED, m);
 
 
 
-/** BONUS: Factorial */
+/** BONUS: Factorial
+ *
+ * `n` factorial, written `n!`, is defined by:
+ *
+ *   n! = 1 * 2 * ... * (n - 1) * n
+ *
+ * Or, recursively as:
+ *
+ *  0! = 1
+ *  n! = n * (n-1)!
+ *
+ * Given there is such a natural recursive definition, we might try and
+ * base our solution on that:
+ *
+ *   const FACT = (m) => m(WHEN_NON_ZERO, WHEN_ZERO)
+ *
+ * We know that, `FACT(m) = WHEN_ZERO = S(Z)`, but `WHEN_NON_ZERO` accepts
+ * `(n-1)!`, and produces `n!`. We can do this by multiplying by `n`, but the
+ * problem is, given just `(n-1)!` we have no way of knowing what `n` is!
+ *
+ * We can compensate for the missing information by passing it in as a
+ * parameter. As we only have one parameter to play with, we can achieve the
+ * same effect by packaging it up in a pair.
+ *
+ * Now, after `n` invocations of `WHEN_NON_ZERO`, we get the pair
+ * `[n+1,n!]`. Whilst we are building up our answer, we use the `n+1` to update
+ * the factorial (and itself), and once we are done, we extract the factorial.
+ */
 
 const FACT = (m) => {
   const UPDATE_PAIR = (num, fact) =>
-          PAIR(S(num), MUL(S(num), fact));
+          PAIR(S(num), MUL(num, fact));
 
   return SND(m((prevPair) => prevPair(UPDATE_PAIR),
-               PAIR(Z, S(Z))));
+               PAIR(S(Z), S(Z))));
 };
 
 {
