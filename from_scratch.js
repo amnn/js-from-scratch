@@ -775,7 +775,27 @@ const FACT = (m) => {
 
 
 
-/** BONUS: Zipping Lists */
+/** BONUS: Zipping Lists
+ *
+ * Zipping takes two lists, and produces a list of pairs. If `p` is the i'th
+ * pair of the result, then `FST(p)` is the i'th element of the first list, and
+ * `SND(p)` the i'th element of the second list. As a consequence of this
+ * definition, the zip of two lists is only as long as the shortest list you
+ * give it.
+ *
+ * The structure of our solution will be to consume the first list to produce a
+ * "zipper": A combinator that when fed a list, zips it with the first list.
+ *
+ * When the first list is empty, the corresponding zipper ignores its input and
+ * returns the empty list. When it is non-empty we construct the zipper for the
+ * list from its head and the zipper for its tail.
+
+ * The list's zipper splats its parameter. If splatting yields `NOTHING`,
+ * meaning the parameter was the empty list, we return an empty list. Otherwise,
+ * we pair the head of the list with the head of the parameter to make the head
+ * of the zip, and construct the tail of the zip by passing the tail of the
+ * parameter to the list's tail's zipper.
+ */
 
 const ZIP = (xs, ys) => {
   const WHEN_NOT_EMPTY = (x, tailZipper) => (zs) => {
