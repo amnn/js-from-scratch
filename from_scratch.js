@@ -10,49 +10,49 @@
 
 /** Table of Contents [toc]
  *
- * Combinators [cmbntrs] ( )
+ * ( ) Combinators [cmbntrs]
  * ^ ^ ^ ^ ^
  * | | | | |
- * | | | | Booleans [blns] ( )
+ * | | | | ( ) Booleans [blns]
  * | | | | ^ ^
  * | | | | | |
- * | | | | | If Expressions [ifxprs] ( )
+ * | | | | | ( ) If Expressions [ifxprs]
  * | | | | | ^ ^ ^
  * | | | | | | | |
- * | | | | | | | And [land] ( )
- * | | | | | | ` Or  [lor]  ( )
- * | | | | | `-- Not [lnot] ( )
+ * | | | | | | | ( ) And [land]
+ * | | | | | | ` ( ) Or  [lor]
+ * | | | | | `-- ( ) Not [lnot]
  * | | | | |     ^
  * | | | | | ,---'
- * | | | `-+-+ Natural Numbers [ntnmbrs] ( )
+ * | | | `-+-+ ( ) Natural Numbers [ntnmbrs]
  * | | |   | | ^ ^ ^ ^ ^
  * | | |   | | | | | | |
- * | | |   | `-+-+-+-+ Parity         [prty]     ( )
- * | | |   `---+-+-+-` Is Zero?       [szr]      ( )
- * | | |       | | `-- Addition       [addtn]    ( )
- * | | |       | `---- Subtraction    [sbtrctn]  ( ) ****
- * | | |       `------ Multiplication [mltplctn] ( )
+ * | | |   | `-+-+-+-+ ( ) Parity         [prty]
+ * | | |   `---+-+-+-` ( ) Is Zero?       [szr]
+ * | | |       | | `-- ( ) Addition       [addtn]
+ * | | |       | `---- ( ) Subtraction    [sbtrctn]  ****
+ * | | |       `------ ( ) Multiplication [mltplctn]
  * | | |               ^
  * | | | ,-------------'
- * | | `-+ Pairs [prs] ( )
+ * | | `-+ ( ) Pairs [prs]
  * | |   | ^ ^
  * | |   | | |
- * | |   `-+ Factorial [fctrl] ( ) **
+ * | |   `-+ ( ) Factorial [fctrl] **
  * | | ,---'
- * | `-+-- Optionals [optnls] ( )
+ * | `-+-- ( ) Optionals [optnls]
  * | ,-'   ^
  * | | ,---'
- * `-+-+-- Lists [lsts] ( )
+ * `-+-+-- ( ) Lists [lsts]
  *   | |   ^ ^ ^ ^ ^
  *   | |   | | | | |
- *   | |   | | | | Concatenation [cnct]   ( )
- *   | |   | | | ` Length        [lngth]  ( )
- *   | |   | | `-- Map / Filter  [mpfltr] ( )
- *   | |   | `---- Folding       [fldng]  ( ) ****
- *   `-`---`------ Head / Tail   [hdtl]   ( ) ***
+ *   | |   | | | | ( ) Concatenation [cnct]
+ *   | |   | | | ` ( ) Length        [lngth]
+ *   | |   | | `-- ( ) Map / Filter  [mpfltr]
+ *   | |   | `---- ( ) Folding       [fldng]  ****
+ *   `-`---`------ ( ) Head / Tail   [hdtl]   ***
  *                 ^
  *                 |
- *                 Zip [zppng] ( ) ****
+ *                 ( ) Zip [zppng] ****
  */
 
 
