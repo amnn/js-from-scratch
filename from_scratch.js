@@ -4,7 +4,6 @@
  *   -- Ashok Menon (@amnn)
  */
 
-// TODO: Re-order sections to follow ToC
 // TODO: Presentation skeleton
 
 "use strict";
@@ -46,11 +45,11 @@
  * `-+-+-- Lists [lsts] ( )
  *   | |   ^ ^ ^ ^ ^
  *   | |   | | | | |
- *   | |   | | | | Concatenation [cnct]    ( )
- *   | |   | | | ` Length        [lngth]   ( )
- *   | |   | | `-- Map / Filter  [mpfltr]  ( )
- *   | |   | `---- Folding       [folding] ( ) ****
- *   `-`---`------ Head / Tail   [hdtl]    ( ) ***
+ *   | |   | | | | Concatenation [cnct]   ( )
+ *   | |   | | | ` Length        [lngth]  ( )
+ *   | |   | | `-- Map / Filter  [mpfltr] ( )
+ *   | |   | `---- Folding       [fldng]  ( ) ****
+ *   `-`---`------ Head / Tail   [hdtl]   ( ) ***
  *                 ^
  *                 |
  *                 Zip [zppng] ( ) ****
@@ -376,6 +375,65 @@ const ADD = (m, n) => (s, z) => m(s, n(s, z));
 
 
 
+/** (Saturated) Subtraction [sbtrctn] ****
+ *
+ * We have no encoding for negative numbers. This poses a problem when defining
+ * subtraction, because subtracting the larger of two numbers from the smaller
+ * usually yields a negative number. If the result of subtraction were to drop
+ * below 0, saturated subtraction gives 0 instead.
+ *
+ * This is definable as a combinator: in order to subtract `n` (performing `y`
+ * applications) from `m`, we subtract 1 from `m`, `y` times. This relies upon
+ * the auxiliary combinator, `PRED`, with the following specification:
+ *
+ *   PRED(S(n)) = n if `n` is a number
+ *   PRED(Z)    = Z
+ *
+ * `PRED` accepts a number and produces a number, so we know it is of the form:
+ *
+ *   const PRED = (n) => (s, z) => ...
+ *
+ * Within the `...`, we must apply `s` to `z` one fewer time than `n` does. We
+ * do this by consuming `n` to produce a function that abstracts over the last
+ * application of `s`. That is to say:
+ *
+ * (s, z) =>       s(z)    becomes (g) =>       g(z)
+ * (s, z) =>     s(s(z))   becomes (g) =>     g(s(z))
+ *                         ...
+ * (s, z) => s(s(s(s(z)))) becomes (g) => g(s(s(s(z))))
+ *
+ * When the number is 0, there are no applications of `s`, so the resulting
+ * combinator is `(g) => z`. For the recursive case, we are provided with a
+ * combinator that performs x-1 applications and abstracts over the x'th (`f`),
+ * and we must return a combinator that performs `x` applications and abstracts
+ * over the x+1'th.
+ *
+ *   f(s)
+ *
+ * gives us the `x` applications, and we abstract over the last application by
+ * wrapping it in a combinator:
+ *
+ *   (g) => g(f(s))
+ *
+ * Finally, we apply the result of consuming the number to `ID` to discard the
+ * very last application of `s` that was abstracted over.
+ */
+
+const PRED = (n) => (s, z) => n((f) => (g) => g(f(s)), (_) => z)(ID);
+const SUB  = (m, n) => n(PRED, m);
+
+{
+  const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
+
+  assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
+  assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
+  assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
+}
+
+
+
+
+
 /** Multiplication [mltplctn]
  *
  * We are given two combinator numbers, `m` and `n`. Let's say (once again) that
@@ -435,6 +493,53 @@ function toPair(pair_f) {
   assert("Pair Encoding", [1, 2], toPair(pair));
   assert("Pair First",  1, FST(pair));
   assert("Pair Second", 2, SND(pair));
+}
+
+
+
+
+
+/** Factorial [fctrl] **
+ *
+ * `n` factorial, written `n!`, is defined by:
+ *
+ *   n! = 1 * 2 * ... * (n - 1) * n
+ *
+ * Or, recursively as:
+ *
+ *  0! = 1
+ *  n! = n * (n-1)!
+ *
+ * Given there is such a natural recursive definition, we might try and
+ * base our solution on that:
+ *
+ *   const FACT = (m) => m(WHEN_NON_ZERO, WHEN_ZERO)
+ *
+ * We know that, `FACT(m) = WHEN_ZERO = S(Z)`, but `WHEN_NON_ZERO` accepts
+ * `(n-1)!`, and produces `n!`. We can do this by multiplying by `n`, but the
+ * problem is, given just `(n-1)!` we have no way of knowing what `n` is!
+ *
+ * We can compensate for the missing information by passing it in as a
+ * parameter. As we only have one parameter to play with, we can achieve the
+ * same effect by packaging it up in a pair.
+ *
+ * Now, after `n` invocations of `WHEN_NON_ZERO`, we get the pair
+ * `[n+1,n!]`. Whilst we are building up our answer, we use the `n+1` to update
+ * the factorial (and itself), and once we are done, we extract the factorial.
+ */
+
+const FACT = (m) => {
+  const UPDATE_PAIR = (num, fact) =>
+          PAIR(S(num), MUL(num, fact));
+
+  return SND(m((prevPair) => prevPair(UPDATE_PAIR),
+               PAIR(S(Z), S(Z))));
+};
+
+{
+  assert("0!", 1,   toNum(FACT(fromNum(0))));
+  assert("1!", 1,   toNum(FACT(fromNum(1))));
+  assert("5!", 120, toNum(FACT(fromNum(5))));
 }
 
 
@@ -516,51 +621,6 @@ function toArray(list_f) {
 
 {
   assert("List Encoding", [1, 2, 3], toArray(fromArray([1, 2, 3])));
-}
-
-
-
-
-
-/** Head and Tail [hdtl]
- *
- * `HD` returns the first element of a list, and `TL` returns all but the first
- * element. Both these combinators only produce meaningful results when applied
- * to non-empty lists, but any list can be given to them. This is where our
- * optionals come in handy.
- *
- * The definition of `HD` comes easily enough: The head of an empty list is
- * `NOTHING`, the head of a non-empty list is, the first parameter passed to the
- * combinator that acts on non-empty list (wrapped in the `SOME` combinator.) In
- * a sense, this corresponds to `IS_ZERO` for numbers, and optionals correspond
- * to booleans.
- */
-
-const HD = (l) => l((hd, _) => SOME(hd), NOTHING);
-
-/**
- * In order to calculate the tail of a list, we define another function:
- * `SPLAT`. Splatting a non-empty list splits it apart at the top, into some
- * pair of head and tail. Splatting an empty list gives nothing. It is
- * straightforward to define `TL` using this.
- */
-
-const SPLAT = (list) => {
-  const WHEN_NOT_EMPTY = (hd, tailSplat) =>
-          SOME(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
-
-  return list(WHEN_NOT_EMPTY, NOTHING);
-};
-
-const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING);
-
-{
-  assert("Empty Head",     null, toOptional(HD(NIL)));
-  assert("Non-Empty Head", 1,    toOptional(HD(CONS(1, NIL))));
-  assert("Empty Tail",     null, toOptional(TL(NIL)));
-
-  assert("Non-Empty Tail", [2, 3],
-         toArray(toOptional(TL(fromArray([1, 2, 3])))));
 }
 
 
@@ -657,7 +717,7 @@ const FILTER = (p, xs) => xs((hd, filteredTl) =>
 
 
 
-/** BONUS: Folding [fldng]
+/** Folding [fldng] ****
  *
  * Folding over (or reducing) a data structure involves replacing the
  * constructors used to build it with functions. For example:
@@ -715,113 +775,52 @@ const FOLDL = (f, e, xs) => xs((hd, folder) =>
 
 
 
-/** BONUS: (Saturated) Subtraction [sbtrctn]
+/** Head and Tail [hdtl] ***
  *
- * We have no encoding for negative numbers. This poses a problem when defining
- * subtraction, because subtracting the larger of two numbers from the smaller
- * usually yields a negative number. If the result of subtraction were to drop
- * below 0, saturated subtraction gives 0 instead.
+ * `HD` returns the first element of a list, and `TL` returns all but the first
+ * element. Both these combinators only produce meaningful results when applied
+ * to non-empty lists, but any list can be given to them. This is where our
+ * optionals come in handy.
  *
- * This is definable as a combinator: in order to subtract `n` (performing `y`
- * applications) from `m`, we subtract 1 from `m`, `y` times. This relies upon
- * the auxiliary combinator, `PRED`, with the following specification:
- *
- *   PRED(S(n)) = n if `n` is a number
- *   PRED(Z)    = Z
- *
- * `PRED` accepts a number and produces a number, so we know it is of the form:
- *
- *   const PRED = (n) => (s, z) => ...
- *
- * Within the `...`, we must apply `s` to `z` one fewer time than `n` does. We
- * do this by consuming `n` to produce a function that abstracts over the last
- * application of `s`. That is to say:
- *
- * (s, z) =>       s(z)    becomes (g) =>       g(z)
- * (s, z) =>     s(s(z))   becomes (g) =>     g(s(z))
- *                         ...
- * (s, z) => s(s(s(s(z)))) becomes (g) => g(s(s(s(z))))
- *
- * When the number is 0, there are no applications of `s`, so the resulting
- * combinator is `(g) => z`. For the recursive case, we are provided with a
- * combinator that performs x-1 applications and abstracts over the x'th (`f`),
- * and we must return a combinator that performs `x` applications and abstracts
- * over the x+1'th.
- *
- *   f(s)
- *
- * gives us the `x` applications, and we abstract over the last application by
- * wrapping it in a combinator:
- *
- *   (g) => g(f(s))
- *
- * Finally, we apply the result of consuming the number to `ID` to discard the
- * very last application of `s` that was abstracted over.
+ * The definition of `HD` comes easily enough: The head of an empty list is
+ * `NOTHING`, the head of a non-empty list is, the first parameter passed to the
+ * combinator that acts on non-empty list (wrapped in the `SOME` combinator.) In
+ * a sense, this corresponds to `IS_ZERO` for numbers, and optionals correspond
+ * to booleans.
  */
 
-const PRED = (n) => (s, z) => n((f) => (g) => g(f(s)), (_) => z)(ID);
-const SUB  = (m, n) => n(PRED, m);
+const HD = (l) => l((hd, _) => SOME(hd), NOTHING);
 
-{
-  const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
-
-  assert("Sub Right Identity", 4, toNum(SUB(n4, n0)));
-  assert("Sub Arbitrary",      1, toNum(SUB(n3, n2)));
-  assert("Sub Saturation",     0, toNum(SUB(n2, n3)));
-}
-
-
-
-
-
-/** BONUS: Factorial [fctrl]
- *
- * `n` factorial, written `n!`, is defined by:
- *
- *   n! = 1 * 2 * ... * (n - 1) * n
- *
- * Or, recursively as:
- *
- *  0! = 1
- *  n! = n * (n-1)!
- *
- * Given there is such a natural recursive definition, we might try and
- * base our solution on that:
- *
- *   const FACT = (m) => m(WHEN_NON_ZERO, WHEN_ZERO)
- *
- * We know that, `FACT(m) = WHEN_ZERO = S(Z)`, but `WHEN_NON_ZERO` accepts
- * `(n-1)!`, and produces `n!`. We can do this by multiplying by `n`, but the
- * problem is, given just `(n-1)!` we have no way of knowing what `n` is!
- *
- * We can compensate for the missing information by passing it in as a
- * parameter. As we only have one parameter to play with, we can achieve the
- * same effect by packaging it up in a pair.
- *
- * Now, after `n` invocations of `WHEN_NON_ZERO`, we get the pair
- * `[n+1,n!]`. Whilst we are building up our answer, we use the `n+1` to update
- * the factorial (and itself), and once we are done, we extract the factorial.
+/**
+ * In order to calculate the tail of a list, we define another function:
+ * `SPLAT`. Splatting a non-empty list splits it apart at the top, into some
+ * pair of head and tail. Splatting an empty list gives nothing. It is
+ * straightforward to define `TL` using this.
  */
 
-const FACT = (m) => {
-  const UPDATE_PAIR = (num, fact) =>
-          PAIR(S(num), MUL(num, fact));
+const SPLAT = (list) => {
+  const WHEN_NOT_EMPTY = (hd, tailSplat) =>
+          SOME(PAIR(hd, tailSplat((p) => p(CONS), NIL)));
 
-  return SND(m((prevPair) => prevPair(UPDATE_PAIR),
-               PAIR(S(Z), S(Z))));
+  return list(WHEN_NOT_EMPTY, NOTHING);
 };
 
+const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING);
+
 {
-  assert("0!", 1,   toNum(FACT(fromNum(0))));
-  assert("1!", 1,   toNum(FACT(fromNum(1))));
-  assert("5!", 120, toNum(FACT(fromNum(5))));
+  assert("Empty Head",     null, toOptional(HD(NIL)));
+  assert("Non-Empty Head", 1,    toOptional(HD(CONS(1, NIL))));
+  assert("Empty Tail",     null, toOptional(TL(NIL)));
+
+  assert("Non-Empty Tail", [2, 3],
+         toArray(toOptional(TL(fromArray([1, 2, 3])))));
 }
 
 
 
 
 
-/** BONUS: Zipping Lists [zppng]
+/** Zipping Lists [zppng] ****
  *
  * Zipping takes two lists, and produces a list of pairs. If `p` is the i'th
  * pair of the result, then `FST(p)` is the i'th element of the first list, and
