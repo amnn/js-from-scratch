@@ -4,17 +4,63 @@
  *   -- Ashok Menon (@amnn)
  */
 
-// TODO: Comments
-// TODO: Contents Page + Tags
+// TODO: Re-order sections to follow ToC
 // TODO: Presentation skeleton
 
 "use strict";
 
+/** Table of Contents [toc]
+ *
+ * Combinators [cmbntrs] ( )
+ * ^ ^ ^ ^ ^
+ * | | | | |
+ * | | | | Booleans [blns] ( )
+ * | | | | ^ ^
+ * | | | | | |
+ * | | | | | If Expressions [ifxprs] ( )
+ * | | | | | ^ ^ ^
+ * | | | | | | | |
+ * | | | | | | | And [land] ( )
+ * | | | | | | ` Or  [lor]  ( )
+ * | | | | | `-- Not [lnot] ( )
+ * | | | | |     ^
+ * | | | | | ,---'
+ * | | | `-+-+ Natural Numbers [ntnmbrs] ( )
+ * | | |   | | ^ ^ ^ ^ ^
+ * | | |   | | | | | | |
+ * | | |   | `-+-+-+-+ Parity         [prty]     ( )
+ * | | |   `---+-+-+-` Is Zero?       [szr]      ( )
+ * | | |       | | `-- Addition       [addtn]    ( )
+ * | | |       | `---- Subtraction    [sbtrctn]  ( ) ****
+ * | | |       `------ Multiplication [mltplctn] ( )
+ * | | |               ^
+ * | | | ,-------------'
+ * | | `-+ Pairs [prs] ( )
+ * | |   | ^ ^
+ * | |   | | |
+ * | |   `-+ Factorial [fctrl] ( ) **
+ * | | ,---'
+ * | `-+-- Optionals [optnls] ( )
+ * | ,-'   ^
+ * | | ,---'
+ * `-+-+-- Lists [lsts] ( )
+ *   | |   ^ ^ ^ ^ ^
+ *   | |   | | | | |
+ *   | |   | | | | Concatenation [cnct]    ( )
+ *   | |   | | | ` Length        [lngth]   ( )
+ *   | |   | | `-- Map / Filter  [mpfltr]  ( )
+ *   | |   | `---- Folding       [folding] ( ) ****
+ *   `-`---`------ Head / Tail   [hdtl]    ( ) ***
+ *                 ^
+ *                 |
+ *                 Zip [zppng] ( ) ****
+ */
 
 
 
 
-/** Combinators
+
+/** Combinators [cmbntrs]
  *
  * A combinator is a higher-order function that uses only function application,
  * abstraction, its parameters, and previously defined combinators in computing
@@ -37,7 +83,7 @@ const COMP  = (f, g) => (x) => f(g(x));
 
 
 
-/** Test Utilities
+/** Test Utilities [tst]
  *
  * We need some functions to help us test out our combinators, we'll just import
  * them here.
@@ -66,7 +112,7 @@ const { log } = console;
 
 
 
-/** Booleans
+/** Booleans [blns]
  *
  * There are two distinct booleans, we will call them `T` and `F`. What
  * properties do they need to have? They need to:
@@ -119,7 +165,7 @@ function toBool(bool_f) {
 
 
 
-/** If Expressions
+/** If Expressions [ifxprs]
  *
  * What use would booleans be if you couldn't condition on them? The definition
  * of `IF` is very simple, we take the condition `c` and use it to "pick" which
@@ -138,7 +184,7 @@ const IF = (c, t, e) => c(t, e)();
 
 
 
-/** Logical And */
+/** Logical And [land] */
 
 const AND = (l, r) => IF(l, () => r, () => F);
 
@@ -155,7 +201,7 @@ const AND = (l, r) => IF(l, () => r, () => F);
 
 
 
-/** Logical Or */
+/** Logical Or [lor] */
 
 const OR = (l, r) => IF(l, () => T, () => r);
 
@@ -173,7 +219,7 @@ const OR = (l, r) => IF(l, () => T, () => r);
 
 
 
-/** Logical Not */
+/** Logical Not [lnot] */
 
 const NOT = (b) => IF(b, () => F, () => T);
 
@@ -189,7 +235,7 @@ const NOT = (b) => IF(b, () => F, () => T);
 
 
 
-/** Natural Numbers
+/** Natural Numbers [ntnmbrs]
  *
  * The "Natural" numbers are just the non-negative integers (0, 1, 2,
  * 3,...). Like with booleans, we should choose a representation that we can
@@ -235,7 +281,7 @@ function toNum(num_f) {
 
 
 
-/** Is Zero?
+/** Is Zero? [szr]
  *
  * Suppose we wish to check whether a number is 0 or not. One way to look at
  * what we are doing is that we are consuming the number, to produce a boolean.
@@ -257,7 +303,7 @@ const IS_ZERO = (n) => n((_) => F, T);
   assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
 }
 
-/** Parity
+/** Parity [prty]
  *
  * Checking whether a number is even (or odd, respectively) is another operation
  * that consumes numbers and produces booleans, so again, we have to choose
@@ -288,7 +334,7 @@ const IS_ODD  = (n) => n(NOT, F);
 }
 
 
-/** Addition
+/** Addition [addtn]
  *
  * What does it mean to add two combinator numbers, `m` and `n`?  Let us say
  * that `m` applies its first argument to its second `x` times and `n` applies
@@ -330,7 +376,7 @@ const ADD = (m, n) => (s, z) => m(s, n(s, z));
 
 
 
-/** Multiplication
+/** Multiplication [mltplctn]
  *
  * We are given two combinator numbers, `m` and `n`. Let's say (once again) that
  * `m` performs `x` applications, and `n` performs `y`. Then we need to produce
@@ -358,7 +404,7 @@ const MUL = (m, n) => (s, z) => m((a) => n(s, a), z);
 
 
 
-/** Pairs
+/** Pairs [prs]
  *
  * Pairs store two pieces of information, a first and a second piece. All we
  * want from a pair is to be able to recover these pieces of information later.
@@ -395,7 +441,7 @@ function toPair(pair_f) {
 
 
 
-/** Optionals
+/** Optionals [optnls]
  *
  * A datatype is only as good as the actions you can perform on it. This is why,
  * when we defined numbers, and pairs, we defined them as computations waiting
@@ -435,7 +481,7 @@ function toOptional(opt_f) {
 
 
 
-/** Lists
+/** Lists [lsts]
  *
  * We'll jump straight to what our encoding looks like for lists.
  *
@@ -476,7 +522,7 @@ function toArray(list_f) {
 
 
 
-/** Head and Tail
+/** Head and Tail [hdtl]
  *
  * `HD` returns the first element of a list, and `TL` returns all but the first
  * element. Both these combinators only produce meaningful results when applied
@@ -521,7 +567,7 @@ const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING);
 
 
 
-/** List Concatenation
+/** List Concatenation [cnct]
  *
  * If viewed in the right light, list concatenation looks just like addition for
  * numbers...
@@ -542,7 +588,7 @@ const CONCAT = (xs, ys) => (c, n) => xs(c, ys(c, n));
 
 
 
-/** List Length
+/** List Length [lngth]
  *
  * Calculating the length of a list can also be seen as converting a list to a
  * number. We do this by ignoring the elements of the list but keeping the
@@ -567,7 +613,7 @@ const LEN = (xs) => xs((_, tailLen) => S(tailLen), Z);
 
 
 
-/** Mapping and Filtering
+/** Mapping and Filtering [mpfltr]
  *
  * Map and filter are usually defined recursively: Mapping over an empty list
  * yields the empty list, and mapping over a non-empty list involves applying
@@ -611,7 +657,7 @@ const FILTER = (p, xs) => xs((hd, filteredTl) =>
 
 
 
-/** BONUS: Folding
+/** BONUS: Folding [fldng]
  *
  * Folding over (or reducing) a data structure involves replacing the
  * constructors used to build it with functions. For example:
@@ -669,7 +715,7 @@ const FOLDL = (f, e, xs) => xs((hd, folder) =>
 
 
 
-/** BONUS: (Saturated) Subtraction
+/** BONUS: (Saturated) Subtraction [sbtrctn]
  *
  * We have no encoding for negative numbers. This poses a problem when defining
  * subtraction, because subtracting the larger of two numbers from the smaller
@@ -728,7 +774,7 @@ const SUB  = (m, n) => n(PRED, m);
 
 
 
-/** BONUS: Factorial
+/** BONUS: Factorial [fctrl]
  *
  * `n` factorial, written `n!`, is defined by:
  *
@@ -775,7 +821,7 @@ const FACT = (m) => {
 
 
 
-/** BONUS: Zipping Lists
+/** BONUS: Zipping Lists [zppng]
  *
  * Zipping takes two lists, and produces a list of pairs. If `p` is the i'th
  * pair of the result, then `FST(p)` is the i'th element of the first list, and
