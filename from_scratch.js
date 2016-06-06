@@ -280,36 +280,15 @@ function toNum(num_f) {
 
 
 
-/** Is Zero? [szr]
+/** Parity [prty]
  *
- * Suppose we wish to check whether a number is 0 or not. One way to look at
+ * Suppose we wish to check whether a number is even or odd. One way to look at
  * what we are doing is that we are consuming the number, to produce a boolean.
  * To consume a combinator-encoded number, we have to apply it, but the question
  * is, to what?
  *
- * Applying zero will always give you back the second parameter, so it is clear
- * that we must give `T` as our second parameter to satisfy `IS_ZERO(Z) = T`.
- *
- * Applying a non-zero number will give back the result of applying the first
- * parameter a number of times to `T`. No matter how many times we apply it, the
- * return value should be `F`, so the first parameter is `(_) => F`.
- */
-
-const IS_ZERO = (n) => n((_) => F, T);
-
-{
-  assert("Test Zero",     true,  toBool(IS_ZERO(fromNum(0))));
-  assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
-}
-
-/** Parity [prty]
- *
- * Checking whether a number is even (or odd, respectively) is another operation
- * that consumes numbers and produces booleans, so again, we have to choose
- * combinators to apply the number to.
- *
- * As before, by looking at zero we see that the second parameter has to be `T`
- * in the definition of `IS_EVEN` (because 0 is even) and must be `F` in
+ * By looking at what happens for zero we see that the second parameter has to
+ * be `T` in the definition of `IS_EVEN` (because 0 is even) and must be `F` in
  * `IS_ODD`.
  *
  * The first parameter, `s`, is a bit more interesting. Let us look at some
@@ -318,7 +297,8 @@ const IS_ZERO = (n) => n((_) => F, T);
  *   IS_EVEN(one) ---> one(s, T) --->   s(T)  -?-> F
  *   IS_EVEN(two) ---> two(s, T) ---> s(s(T)) -?-> s(F) -?-> T
  *
- * So, `s(T)` should be `F` and `s(F)` should be `T`. `s` is `NOT`!
+ * So, `s(T)` should be `F` and `s(F)` should be `T`. `s` is `NOT`! If we follow
+ * the same steps for `IS_ODD` we find that `s` is `NOT` there too.
  */
 
 const IS_EVEN = (n) => n(NOT, T);
@@ -331,6 +311,35 @@ const IS_ODD  = (n) => n(NOT, F);
     assert(`${i} odd parity`,  i % 2 === 1, toBool(IS_ODD(ni)));
   }
 }
+
+
+
+
+
+/** Is Zero? [szr]
+ *
+ * Checking whether a number is 0 is another operation that consumes numbers and
+ * produces booleans, so again, we have to choose combinators to apply the
+ * number to.
+ *
+ * Applying zero will always give you back the second parameter, so it is clear
+ * that we must give `T` as our second parameter to satisfy `IS_ZERO(Z) = T`.
+ *
+ * Applying a non-zero number will give back the result of applying the first
+ * parameter a number of times to `T`. No matter how many times we apply it, the
+ * return value should be `F`, so the first parameter is `(_) => F`, or
+ * `CONST(F)`.
+ */
+
+const IS_ZERO = (n) => n(CONST(F), T);
+
+{
+  assert("Test Zero",     true,  toBool(IS_ZERO(fromNum(0))));
+  assert("Test Non-Zero", false, toBool(IS_ZERO(fromNum(3))));
+}
+
+
+
 
 
 /** Addition [addtn]
@@ -403,10 +412,10 @@ const ADD = (m, n) => (s, z) => m(s, n(s, z));
  * (s, z) => s(s(s(s(z)))) becomes (g) => g(s(s(s(z))))
  *
  * When the number is 0, there are no applications of `s`, so the resulting
- * combinator is `(g) => z`. For the recursive case, we are provided with a
- * combinator that performs x-1 applications and abstracts over the x'th (`f`),
- * and we must return a combinator that performs `x` applications and abstracts
- * over the x+1'th.
+ * combinator is `(g) => z`, aka `CONST(z)`. For the recursive case, we are
+ * provided with a combinator that performs x-1 applications and abstracts over
+ * the x'th (`f`), and we must return a combinator that performs `x`
+ * applications and abstracts over the x+1'th.
  *
  *   f(s)
  *
@@ -419,7 +428,7 @@ const ADD = (m, n) => (s, z) => m(s, n(s, z));
  * very last application of `s` that was abstracted over.
  */
 
-const PRED = (n) => (s, z) => n((f) => (g) => g(f(s)), (_) => z)(ID);
+const PRED = (n) => (s, z) => n((f) => (g) => g(f(s)), CONST(z))(ID);
 const SUB  = (m, n) => n(PRED, m);
 
 {
@@ -834,7 +843,7 @@ const TL = (l) => SPLAT(l)((pair) => SOME(SND(pair)), NOTHING);
  * When the first list is empty, the corresponding zipper ignores its input and
  * returns the empty list. When it is non-empty we construct the zipper for the
  * list from its head and the zipper for its tail.
-
+ *
  * The list's zipper splats its parameter. If splatting yields `NOTHING`,
  * meaning the parameter was the empty list, we return an empty list. Otherwise,
  * we pair the head of the list with the head of the parameter to make the head
