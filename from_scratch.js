@@ -4,8 +4,6 @@
  *   -- Ashok Menon (@amnn)
  */
 
-// TODO: Presentation skeleton
-
 "use strict";
 
 /** Table of Contents [toc]
