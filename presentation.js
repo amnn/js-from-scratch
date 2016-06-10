@@ -74,14 +74,9 @@ const COMP  = undefined;
 
 /*
 {
-  // Assert checks equality between potentially nested data structures.
-
   assert("Assert Numbers", 1, 1);
   assert("Assert Arrays", [2], [2]);
   assert("Assert Nested Arrays", [[1], 2], [[1], 2]);
-
-  // Stringify is a bit more unusual, it is easiest to see what it does by
-  // looking at the examples below.
 
   const f = stringify("f");
   const g = stringify("g");
@@ -99,27 +94,18 @@ const COMP  = undefined;
 const T = undefined;
 const F = undefined;
 
-function fromBool(bool) {}
+function fromBool(bool) {
+  if (bool) {
+    return T;
+  } else {
+    return F;
+  }
+}
 
 function toBool(bool_f) {}
 
 /*
 {
-  // There are lots of ways to check that we have actually defined booleans
-  // just by looking at the constraints we outlined earlier, and making sure
-  // we have met them.
-  //
-  // We are going to take a shortcut, however, by defining a way to convert
-  // between our combinators and the concepts they simulate. If converting a
-  // regular boolean into a combinator and back preserves it (true comes back
-  // out as true, and false back out as false), and conversely, converting a
-  // combinator boolean into a regular boolean and back preserves it, we know
-  // we're on to a good thing.
-  //
-  // We check one direction below, but the other direction is harder to test
-  // reliably, because it involves checking equality between functions, so
-  // you'll have to take my word for it!
-
   assert("Encode True",  true,  toBool(fromBool(true)));
   assert("Encode False", false, toBool(fromBool(false)));
 }
@@ -199,7 +185,13 @@ const NOT = undefined;
 const Z = undefined;
 const S = undefined;
 
-function fromNum(num) {}
+function fromNum(num) {
+  if (num === 0) {
+    return Z;
+  } else {
+    return S(fromNum(num - 1));
+  }
+}
 
 function toNum(num_f) {}
 
@@ -254,18 +246,6 @@ const ADD = undefined;
 
 /*
 {
-  // Addition also has a bunch of rules that it needs to satisfy. We're going
-  // to avoid proving them ourselves again by using our encoding/decoding
-  // trick. We expect that JavaScript's own addition satisfies the rules, so
-  // all we need to show is that if we:
-  //
-  // - Encode two numbers: m, n
-  // - Perform our addition
-  // - Decode the result
-  //
-  // It should be equal to `m + n`. This should hold for any `m` and `n`, but
-  // we only check some key cases below.
-
   const [n0, n2, n3, n4] = [0, 2, 3, 4].map(fromNum);
 
   assert("Add Left Identity",  4, toNum(ADD(n0, n4)));
@@ -325,7 +305,9 @@ const PAIR = undefined;
 const FST  = undefined;
 const SND  = undefined;
 
-function fromPair(pair) {}
+function fromPair(pair) {
+  return PAIR(pair[0], pair[1]);
+}
 
 function toPair(pair_f) {}
 
@@ -363,7 +345,13 @@ const FACT = undefined;
 const SOME    = undefined;
 const NOTHING = undefined;
 
-function fromOptional(opt) {}
+function fromOptional(opt) {
+  if (opt === null) {
+    return NOTHING;
+  } else {
+    return SOME(opt);
+  }
+}
 
 function toOptional(opt_f) {}
 
@@ -383,7 +371,13 @@ function toOptional(opt_f) {}
 const CONS = undefined;
 const NIL  = undefined;
 
-function fromArray(array) {}
+function fromArray(array) {
+  if (array.length === 0) {
+    return NIL;
+  } else {
+    return CONS(array[0], fromArray(array.slice(1)));
+  }
+}
 
 function toArray(list_f) {}
 
