@@ -516,3 +516,17 @@ const ZIP = undefined;
          toArray(ZIP(long, short)).map(toPair));
 }
  */
+
+
+
+
+
+/** [theend]
+ *
+ *
+ * Thanks!
+ *
+ *
+ * github.com/amnn/js-from-scratch
+ * twitter.com/ashok_menon
+ */
